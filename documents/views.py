@@ -16,17 +16,17 @@ def signup_view(request):
 
         if not username or not password:
             messages.error(request, "Username and password required")
-            return render(request, 'documents/signup.html')
+            return render(request, 'login.html')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken")
-            return render(request, 'documents/signup.html')
+            return render(request, 'login.html')
 
         user = User.objects.create_user(username=username, password=password)
         login(request, user)
         return redirect('dashboard')
 
-    return render(request, 'signup.html')
+    return render(request, 'login.html')
 
 def login_view(request):
     if request.method == 'POST':
