@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ document.title }} · DocsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0f0f14;
+    --panel: #16161d;
+    --panel-2: #1b1b23;
+    --panel-border: rgba(255,255,255,0.08);
+    --text: #e8e6e2;
+    --text-muted: #8b8b96;
+    --accent: #f5a623;
+    --accent-dim: rgba(245,166,35,0.14);
+    --radius: 10px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height:100vh;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--panel-border);
+    position:sticky;
+    top:0;
+    background: rgba(15,15,20,0.9);
+    backdrop-filter: blur(8px);
+    z-index:20;
+  }
+
+  .header-left{
+    display:flex;
+    align-items:center;
+    gap:16px;
+  }
+
+  .back-link{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color: var(--text-muted);
+    text-decoration:none;
+    font-size:13.5px;
+    padding: 7px 12px;
+    border-radius:7px;
+    border:1px solid var(--panel-border);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .back-link:hover{
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+
+  .save-indicator{
+    font-size:12.5px;
+    color: var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    opacity:0;
+    transition: opacity 0.3s ease;
+  }
+
+  .save-indicator.show{ opacity:1; }
+
+  .save-indicator .dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background: var(--accent);
+  }
+
+  .header-right{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .shared-badge{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color: var(--text-muted);
+    background: var(--panel-2);
+    border: 1px solid var(--panel-border);
+    padding: 7px 13px;
+    border-radius: 20px;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding: 9px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight:600;
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid transparent;
+    text-decoration:none;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .btn:active{ transform: translateY(1px); }
+
+  .btn-primary{
+    background: var(--accent);
+    color: #16130a;
+  }
+
+  .btn-primary:hover{ background:#ffb63c; }
+
+  .btn-secondary{
+    background: var(--panel-2);
+    border-color: var(--panel-border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover{ border-color: rgba(255,255,255,0.22); }
+
+  main{
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 44px 32px 100px;
+  }
+
+  #title-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    outline:none;
+    color: var(--text);
+    font-family:inherit;
+    font-size: 32px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin-bottom: 8px;
+    padding: 4px 0;
+  }
+
+  #title-input::placeholder{ color:#4a4a55; }
+
+  .subline{
+    font-size:12.5px;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+  }
+
+  /* Quill overrides for dark theme */
+  .ql-toolbar.ql-snow{
+    border: 1px solid var(--panel-border) !important;
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--panel);
+    padding: 10px 12px;
+  }
+
+  .ql-container.ql-snow{
+    border: 1px solid var(--panel-border) !important;
+    border-top:none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--panel);
+    font-family:'Inter', sans-serif;
+    font-size: 15.5px;
+  }
+
+  .ql-editor{
+    min-height: 420px;
+    color: var(--text);
+    line-height:1.7;
+    padding: 24px 28px;
+  }
+
+  .ql-editor.ql-blank::before{
+    color: #4a4a55;
+    font-style:normal;
+  }
+
+  /* Inserted images fit the document width nicely */
+  .ql-editor img{
+    max-width: 100%;
+    height:auto;
+    border-radius: 8px;
+    display:block;
+    margin: 10px 0;
+  }
+
+  .ql-snow .ql-stroke{ stroke: var(--text-muted); }
+  .ql-snow .ql-fill{ fill: var(--text-muted); }
+  .ql-snow .ql-picker{ color: var(--text-muted); }
+
+  .ql-toolbar.ql-snow .ql-formats{
+    margin-right: 12px;
+  }
+
+  .ql-snow.ql-toolbar button:hover .ql-stroke,
+  .ql-snow.ql-toolbar button.ql-active .ql-stroke{
+    stroke: var(--accent);
+  }
+
+  .ql-snow.ql-toolbar button:hover .ql-fill,
+  .ql-snow.ql-toolbar button.ql-active .ql-fill{
+    fill: var(--accent);
+  }
+
+  .ql-snow .ql-picker-options{
+    background: var(--panel-2);
+    border: 1px solid var(--panel-border) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  }
+
+  .ql-snow .ql-tooltip{
+    background: var(--panel-2);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  }
+
+  /* Color / background picker theming — keep the icon in sync with the
+     rest of the toolbar, but don't touch the swatch colors themselves */
+  .ql-snow .ql-picker.ql-color .ql-picker-label,
+  .ql-snow .ql-picker.ql-background .ql-picker-label{
+    border: none;
+  }
+
+  .ql-snow .ql-picker.ql-color .ql-picker-label svg .ql-stroke,
+  .ql-snow .ql-picker.ql-background .ql-picker-label svg .ql-stroke{
+    stroke: var(--text-muted);
+  }
+
+  .ql-snow .ql-picker.ql-color .ql-picker-label:hover svg .ql-stroke,
+  .ql-snow .ql-picker.ql-background .ql-picker-label:hover svg .ql-stroke,
+  .ql-snow .ql-picker.ql-color.ql-expanded .ql-picker-label svg .ql-stroke,
+  .ql-snow .ql-picker.ql-background.ql-expanded .ql-picker-label svg .ql-stroke{
+    stroke: var(--accent);
+  }
+
+  /* The little colored underline swatch on the label icon should keep
+     showing the actual selected color, not be forced to theme colors */
+  .ql-snow .ql-picker.ql-color .ql-picker-label .ql-color-label,
+  .ql-snow .ql-picker.ql-background .ql-picker-label .ql-color-label{
+    stroke: none;
+  }
+
+  .ql-snow .ql-picker.ql-color .ql-picker-options,
+  .ql-snow .ql-picker.ql-background .ql-picker-options{
+    padding: 8px;
+    width: auto;
+  }
+
+  .ql-snow .ql-picker.ql-color .ql-picker-item,
+  .ql-snow .ql-picker.ql-background .ql-picker-item{
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 3px;
+  }
+
+  .ql-snow .ql-picker.ql-color .ql-picker-item:hover,
+  .ql-snow .ql-picker.ql-color .ql-picker-item.ql-selected,
+  .ql-snow .ql-picker.ql-background .ql-picker-item:hover,
+  .ql-snow .ql-picker.ql-background .ql-picker-item.ql-selected{
+    border-color: var(--accent);
+  }
+
+  /* Image + clean icons follow the same stroke/fill theme rules above
+     automatically since they use the standard .ql-stroke/.ql-fill classes */
+
+  /* Share section */
+  .share-panel{
+    margin-top: 34px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+
+  .share-panel h3{
+    font-size: 14px;
+    font-weight:600;
+    margin: 0 0 4px;
+  }
+
+  .share-panel .sub{
+    font-size:12.5px;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+  }
+
+  .share-row{
+    display:flex;
+    gap:10px;
+    margin-bottom: 16px;
+  }
+
+  .share-row select{
+    flex:1;
+    padding: 10px 12px;
+    background: #101015;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13.5px;
+    font-family: inherit;
+  }
+
+  .share-row select:focus{
+    outline:none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .chip-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  .chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background: var(--panel-2);
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    font-size:12.5px;
+    padding: 5px 11px;
+    border-radius: 20px;
+  }
+
+  .chip .chip-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background: var(--accent);
+  }
+
+  .chip-empty{
+    font-size:12.5px;
+    color: var(--text-muted);
+    font-style:italic;
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <a href="{% url 'dashboard' %}" class="back-link">&#8592; Dashboard</a>
+      <div class="save-indicator" id="save-indicator">
+        <span class="dot"></span>
+        <span id="save-text">Saved</span>
+      </div>
+    </div>
+    <div class="header-right">
+      {% if not is_owner %}
+      <span class="shared-badge">Shared with you</span>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    <input type="text" id="title-input" placeholder="Untitled document" value="{{ document.title }}" {% if not is_owner %}readonly{% endif %}>
+    <div class="subline">Last updated {{ document.updated_at|timesince }} ago</div>
+
+    <div id="editor">{{ document.content|safe }}</div>
+
+    {% if is_owner %}
+    <div class="share-panel">
+      <h3>Share this document</h3>
+      <p class="sub">Give another user access to view and edit.</p>
+
+      <form id="share-form" class="share-row" method="post" action="{% url 'share_document' document.id %}">
+        {% csrf_token %}
+        <select name="username" id="share-username" required>
+          <option value="" disabled selected>Select a user&hellip;</option>
+          {% for u in all_users %}
+          <option value="{{ u.username }}">{{ u.username }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Share</button>
+      </form>
+
+      <div class="chip-list">
+        {% for user in shared_with %}
+        <span class="chip"><span class="chip-dot"></span>{{ user.username }}</span>
+        {% empty %}
+        <span class="chip-empty">Not shared with anyone yet.</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </main>
+
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script>
+    const documentId = {{ document.id }};
+    const isOwner = {% if is_owner %}true{% else %}false{% endif %};
+
+    // Custom toolbar handler for image uploads: opens a native file
+    // picker, reads the chosen image as a base64 data URL, and inserts
+    // it into the editor at the current cursor position.
+    function imageHandler() {
+      const range = this.quill.getSelection(true);
+
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'image/*');
+      input.click();
+
+      input.onchange = () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          quill.insertEmbed(range.index, 'image', dataUrl, 'user');
+          quill.setSelection(range.index + 1);
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
+    const quill = new Quill('#editor', {
+      theme: 'snow',
+      readOnly: !isOwner,
+      modules: {
+        toolbar: {
+          container: [
+            ['bold', 'italic', 'underline'],
+            [{ header: 1 }, { header: 2 }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ color: [] }, { background: [] }],
+            ['image'],
+            ['clean']
+          ],
+          handlers: {
+            image: imageHandler
+          }
+        }
+      }
+    });
+
+    const titleInput = document.getElementById('title-input');
+    const saveIndicator = document.getElementById('save-indicator');
+    const saveText = document.getElementById('save-text');
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return '';
+    }
+
+    let saveTimeout = null;
+
+    function flashSaved(text) {
+      saveText.textContent = text;
+      saveIndicator.classList.add('show');
+      clearTimeout(saveIndicator._hideTimeout);
+      saveIndicator._hideTimeout = setTimeout(() => {
+        saveIndicator.classList.remove('show');
+      }, 1800);
+    }
+
+    function scheduleSave() {
+      if (!isOwner) return;
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveDocument, 700);
+    }
+
+    async function saveDocument() {
+      try {
+        const response = await fetch(`/document/${documentId}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+            title: titleInput.value,
+            content: quill.root.innerHTML
+          })
+        });
+        if (response.ok) {
+          flashSaved('Saved');
+        } else {
+          flashSaved('Save failed');
+        }
+      } catch (err) {
+        flashSaved('Save failed');
+      }
+    }
+
+    if (isOwner) {
+      quill.on('text-change', scheduleSave);
+      titleInput.addEventListener('input', scheduleSave);
+    }
+  </script>
+
+</body>
+</html>
